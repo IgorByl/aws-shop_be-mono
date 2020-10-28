@@ -1,0 +1,78 @@
+service:
+    name: product-api-service
+
+custom:
+    webpack:
+        webpackConfig: ./webpack.config.js
+        includeModules: true
+    region: eu-west-1
+
+plugins:
+    - serverless-webpack
+
+resources:
+    # API Gateway Errors
+    - ${file(api-gateway-errors.yml)}
+
+provider:
+    name: aws
+    runtime: nodejs12.x
+    region: ${self:custom.region}
+    apiGateway:
+        minimumCompressionSize: 1024 # Enable gzip compression for responses > 1 KB
+    environment:
+        AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+        region: ${self:custom.region}
+
+functions:
+    getProducts:
+        handler: src/get-products.getProducts
+        events:
+            - http:
+                  method: get
+                  path: product
+                  cors: true
+
+    getProductById:
+        handler: src/get-product-by-Id.getProductById
+        events:
+            - http:
+                  method: get
+                  path: product/{id}
+                  cors: true
+                  request:
+                      parameters:
+                          paths:
+                              id: true
+
+    createProduct:
+      handler: src/create-product.createProduct
+      events:
+          - http:
+                method: post
+                path: product
+                cors: true
+
+    deleteProduct:
+        handler: src/delete-product.deleteProduct
+        events:
+            - http:
+                  method: delete
+                  path: product/{id}
+                  cors: true
+                  request:
+                      parameters:
+                          paths:
+                              id: true
+
+    updateProduct:
+        handler: src/update-product.updateProduct
+        events:
+            - http:
+                  method: put
+                  path: product/{id}
+                  cors: true
+                  request:
+                      parameters:
+                          paths:
+                              id: true
