@@ -1,13 +1,15 @@
 import { APIGatewayProxyHandler } from "aws-lambda";
 import "source-map-support/register";
 import { errorHandler } from "../utils";
-import { get } from "../db-product";
+import { getProducts } from "../products-db";
 
-export const getProducts: APIGatewayProxyHandler = errorHandler(
+export const getProductsList: APIGatewayProxyHandler = errorHandler(
   async (event) => {
-    console.log("Lambda getProducts was called with event: ", event);
-    const products = get();
-    console.log("Lambda getProducts returns the result: ", products);
+    console.log("Lambda getProductsList was called with event: ", event);
+
+    const products = getProducts();
+    console.log("Lambda getProductsList returns the result: ", products);
+
     return products;
   }
 );

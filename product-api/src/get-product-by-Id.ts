@@ -1,43 +1,18 @@
-import { APIGatewayProxyHandler } from 'aws-lambda'
-import 'source-map-support/register'
-import errorHandler from "../utils";
-import dynamoDB from "../db-product";
+import { APIGatewayProxyHandler } from "aws-lambda";
+import "source-map-support/register";
+import { errorHandler } from "../utils";
+import { getProducts } from "../products-db";
 
-interface IScanRequestParams {
-  TableName: string;
-  Limit?: number;
-  ExclusiveStartKey?: { [key: string]: any };
-}
+export const getProductsById: APIGatewayProxyHandler = errorHandler(
+  async (event) => {
+    console.log("Lambda getProductsById was called with event: ", event);
 
-export const getProductById: APIGatewayProxyHandler = errorHandler(async (event, context) => {
-  const scanResults = [];
-  let items;
+    const id = event.pathParameters.id;
+    console.log("Lambda getProductsById gets product's id: ", id);
 
-  const params: IScanRequestParams = {
-    TableName: process.env.tableName
-  };
+    const product = getProducts(id);
+    console.log("Lambda getProductsById returns the result: ", product);
 
-  if (event.queryStringParameters && event.queryStringParameters.lastEvaluatedKey) {
-    params.ExclusiveStartKey = {id: event.queryStringParameters.lastEvaluatedKey};
+    return product;
   }
-
-  if (event.queryStringParameters && event.queryStringParameters.limit) {
-    params.Limit = event.queryStringParameters.limit
-  }
-
-  const handleData = async () => {
-    items = await dynamoDB.scan(params);
-    items.Items.forEach(item => scanResults.push(item));
-    params.ExclusiveStartKey = items.LastEvaluatedKey;
-  }
-
-  if (params.Limit) {
-    await handleData();
-  } else {
-    do {
-      await handleData();
-    } while (items.LastEvaluatedKey);
-  }
-
-  return { scanResults, exclusiveStartKey: params.ExclusiveStartKey || null };
-});
+);

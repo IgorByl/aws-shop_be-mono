@@ -25,52 +25,20 @@ provider:
         region: ${self:custom.region}
 
 functions:
-    getProducts:
-        handler: src/get-products.getProducts
+    getProductsList:
+        handler: src/get-products.getProductsList
         events:
             - http:
                   method: get
-                  path: product
+                  path: products
                   cors: true
 
-    getProductById:
-        handler: src/get-product-by-Id.getProductById
+    getProductsById:
+        handler: src/get-product-by-Id.getProductsById
         events:
             - http:
                   method: get
-                  path: product/{id}
-                  cors: true
-                  request:
-                      parameters:
-                          paths:
-                              id: true
-
-    createProduct:
-      handler: src/create-product.createProduct
-      events:
-          - http:
-                method: post
-                path: product
-                cors: true
-
-    deleteProduct:
-        handler: src/delete-product.deleteProduct
-        events:
-            - http:
-                  method: delete
-                  path: product/{id}
-                  cors: true
-                  request:
-                      parameters:
-                          paths:
-                              id: true
-
-    updateProduct:
-        handler: src/update-product.updateProduct
-        events:
-            - http:
-                  method: put
-                  path: product/{id}
+                  path: products/{id}
                   cors: true
                   request:
                       parameters:
