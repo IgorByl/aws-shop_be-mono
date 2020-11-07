@@ -1,0 +1,74 @@
+swagger: "2.0"
+info:
+  description: "This is product server."
+  version: "1.0.0"
+  title: "Swagger product-server"
+  contact:
+    email: "ihar.bulaty@gmail.com"
+host: "4fzkh684g8.execute-api.eu-west-1.amazonaws.com"
+basePath: "/dev"
+tags:
+- name: "products"
+  description: "Products of the shop project."
+schemes:
+- "https"
+paths:
+  /products:
+    get:
+      tags:
+      - "products"
+      summary: "Return product's list."
+      description: "Multiple product objects can be provided."
+      produces:
+      - "application/json"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Product"
+        "500":
+          description: "Invalid status value"
+  /products/{id}:
+    get:
+      tags:
+      - "products"
+      summary: "Find pet by ID"
+      description: "Returns exact product by id."
+      produces:
+      - "application/json"
+      parameters:
+      - name: "id"
+        in: "path"
+        description: "ID of product to return"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/Product"
+        "400":
+          description: "Invalid ID supplied"
+        "500":
+          description: "Product not found"
+definitions:
+  Product:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+      price:
+        type: "integer"
+        format: "int64"
+      title:
+        type: "string"
+      count:
+        type: "integer"
+        format: "int64"
+      description:
+        type: "string"
+    xml:
+      name: "Product"
+    
