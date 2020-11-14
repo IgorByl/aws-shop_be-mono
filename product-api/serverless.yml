@@ -6,9 +6,11 @@ custom:
         webpackConfig: ./webpack.config.js
         includeModules: true
     region: eu-west-1
+    table: database-products
 
 plugins:
     - serverless-webpack
+    - serverless-iam-roles-per-function
 
 resources:
     # API Gateway Errors
@@ -22,7 +24,16 @@ provider:
         minimumCompressionSize: 1024 # Enable gzip compression for responses > 1 KB
     environment:
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
-        region: ${self:custom.region}
+        PG_HOST: ${self:custom.table}.cwa2ipu4ms9x.${self:custom.region}.rds.amazonaws.com
+        PG_PORT: 5432
+        PG_DATABASE: products
+        PG_USERNAME: postgres
+        PG_PASSWORD: ****************
+    iamRoleStatements:
+        - Effect: 'Allow'
+          Action:
+              - rds:*
+          Resource: 'arn:aws:rds:${self:provider.region}:285945094917:db:${self:custom.table}'
 
 functions:
     getProductsList:
@@ -44,3 +55,11 @@ functions:
                       parameters:
                           paths:
                               id: true
+
+    createProduct:
+        handler: src/create-product.createProduct
+        events:
+            - http:
+                  method: post
+                  path: products
+                  cors: true
