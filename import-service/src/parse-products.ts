@@ -6,6 +6,7 @@ import { ProductImportBucketFolders } from "../constants";
 
 export const importFileParser: S3Handler = async (event: S3Event) => {
   const s3 = new AWS.S3({ maxRetries: 0, apiVersion: "2012-11-05" });
+  const sqs = new AWS.SQS({ apiVersion: "2012-11-05" });
   console.log("Lambda importFileParser was called with event: ", event);
 
   for (const record of event.Records) {
@@ -27,7 +28,15 @@ export const importFileParser: S3Handler = async (event: S3Event) => {
       s3Object
         .createReadStream()
         .pipe(csv())
-        .on("data", (data) => console.log(data));
+        .on("data", async (data) => {
+          const sqsPayload = {
+            MessageBody: JSON.stringify(data),
+            QueueUrl: process.env.SQS_URL
+          };
+      
+          await sqs.sendMessage(sqsPayload).promise();
+          console.log("Lambda importFileParser sqs sent data: ", sqsPayload);
+        });
     } catch (error) {
       console.log("Lambda importFileParser parsing stream error: ", error);
     }
