@@ -1,0 +1,61 @@
+service:
+    name: import-service
+
+custom:
+    webpack:
+        webpackConfig: ./webpack.config.js
+        includeModules: true
+    region: eu-west-1
+    bucketName: training-shop-products-cvs
+
+plugins:
+    - serverless-webpack
+    - serverless-iam-roles-per-function
+
+resources:
+    # API Gateway Errors
+    - ${file(api-gateway-errors.yml)}
+
+provider:
+    name: aws
+    runtime: nodejs12.x
+    region: ${self:custom.region}
+    apiGateway:
+        minimumCompressionSize: 1024 # Enable gzip compression for responses > 1 KB
+    environment:
+        AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+
+functions:
+    importProductsFile:
+        handler: src/import-products.importProductsFile
+        iamRoleStatements:
+            - Effect: 'Allow'
+              Action:
+                  - s3:GetObject
+                  - s3:ListBucket
+              Resource: "arn:aws:s3:::${self:custom.bucketName}"
+        events:
+            - http:
+                  method: get
+                  path: import
+                  cors: true
+                  request:
+                    parameters:
+                    querystrings:
+                        name: true
+
+    importFileParser:
+        handler: src/parse-products.importFileParser
+        iamRoleStatements:
+            - Effect: 'Allow'
+              Action:
+                  - s3:*
+              Resource: "arn:aws:s3:::${self:custom.bucketName}"
+        events:
+            - s3:
+                bucket: ${self:custom.bucketName}
+                event: s3:ObjectCreated:*
+                rules:
+                    - prefix: uploaded/
+                    - suffix: .csv
+                existing: true
