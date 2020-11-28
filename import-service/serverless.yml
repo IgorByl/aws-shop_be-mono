@@ -7,14 +7,11 @@ custom:
         includeModules: true
     region: eu-west-1
     bucketName: training-shop-products-cvs
+    table: database-products
 
 plugins:
     - serverless-webpack
     - serverless-iam-roles-per-function
-
-resources:
-    # API Gateway Errors
-    - ${file(api-gateway-errors.yml)}
 
 provider:
     name: aws
@@ -24,6 +21,16 @@ provider:
         minimumCompressionSize: 1024 # Enable gzip compression for responses > 1 KB
     environment:
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+        PG_HOST: ${self:custom.table}.cwa2ipu4ms9x.${self:custom.region}.rds.amazonaws.com
+        PG_PORT: 5432
+        PG_DATABASE: products
+        PG_USERNAME: postgres
+        PG_PASSWORD: *****************
+        REGION: ${self:custom.region}
+        SQS_URL:
+            Ref: CatalogItemsQueue
+        SNS_ARN:
+            Ref: CreateProductTopic
 
 functions:
     importProductsFile:
@@ -41,8 +48,8 @@ functions:
                   cors: true
                   request:
                     parameters:
-                    querystrings:
-                        name: true
+                        querystrings:
+                            name: true
 
     importFileParser:
         handler: src/parse-products.importFileParser
@@ -51,6 +58,13 @@ functions:
               Action:
                   - s3:*
               Resource: "arn:aws:s3:::${self:custom.bucketName}"
+            - Effect: 'Allow'
+              Action:
+                  - sqs:SendMessage
+              Resource:
+                  - Fn::GetAtt:
+                      - CatalogItemsQueue
+                      - Arn
         events:
             - s3:
                 bucket: ${self:custom.bucketName}
@@ -59,3 +73,48 @@ functions:
                     - prefix: uploaded/
                     - suffix: .csv
                 existing: true
+
+    catalogBatchProcess:
+        handler: src/catalogBatchProcess.catalogBatchProcess
+        iamRoleStatements:
+            - Effect: 'Allow'
+              Action:
+                  - rds:*
+              Resource: 'arn:aws:rds:${self:provider.region}:285945094917:db:${self:custom.table}'
+            - Effect: 'Allow'
+              Action:
+                  - sqs:*
+              Resource:
+                  - Fn::GetAtt:
+                      - CatalogItemsQueue
+                      - Arn
+            - Effect: 'Allow'
+              Action:
+                  - sns:*
+              Resource:
+                    Ref: CreateProductTopic
+        events:
+            - sqs:
+                batchSize: 5
+                arn:
+                    Fn::GetAtt:
+                        - CatalogItemsQueue
+                        - Arn
+
+resources:
+  Resources:
+    CatalogItemsQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: CatalogItemsQueue
+    CreateProductTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: CreateProductTopic
+    SNSSubscription:
+      Type: AWS::SNS::Subscription
+      Properties:
+        Endpoint: ihar.bulaty@gmail.com
+        Protocol: email
+        TopicArn:
+          Ref: CreateProductTopic
