@@ -6,10 +6,10 @@ import * as util from "util";
 
 export const importProductsFile: APIGatewayProxyHandler = errorHandler(
   async (event) => {
-    const s3 = new AWS.S3({ maxRetries: 0, apiVersion: "2012-11-05" }),
-      getSignedUrl = util.promisify(s3.getSignedUrl.bind(s3));
-
     console.log("Lambda importProductsFile was called with event: ", event);
+
+    const s3 = new AWS.S3({ maxRetries: 0, signatureVersion: "v4" }),
+      getSignedUrl = util.promisify(s3.getSignedUrl.bind(s3));
 
     const { name } = event.queryStringParameters;
     console.log("Lambda importProductsFile requested file .csv: ", name);

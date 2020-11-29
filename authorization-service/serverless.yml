@@ -1,0 +1,21 @@
+service:
+    name: authorization-service
+
+custom:
+    webpack:
+        webpackConfig: ./webpack.config.js
+        includeModules: true
+    region: eu-west-1
+
+plugins:
+    - serverless-webpack
+    - serverless-dotenv-plugin
+
+provider:
+    name: aws
+    runtime: nodejs12.x
+    region: ${self:custom.region}
+
+functions:
+    basicAuthorizer:
+        handler: handler.basicAuthorizer

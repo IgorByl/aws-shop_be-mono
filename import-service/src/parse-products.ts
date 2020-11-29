@@ -5,7 +5,7 @@ import * as csv from "csv-parser";
 import { ProductImportBucketFolders } from "../constants";
 
 export const importFileParser: S3Handler = async (event: S3Event) => {
-  const s3 = new AWS.S3({ maxRetries: 0, apiVersion: "2012-11-05" });
+  const s3 = new AWS.S3({ maxRetries: 0, signatureVersion: "v4" });
   const sqs = new AWS.SQS({ apiVersion: "2012-11-05" });
   console.log("Lambda importFileParser was called with event: ", event);
 
