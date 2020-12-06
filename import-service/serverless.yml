@@ -12,6 +12,7 @@ custom:
 plugins:
     - serverless-webpack
     - serverless-iam-roles-per-function
+    - serverless-dotenv-plugin
 
 provider:
     name: aws
@@ -22,11 +23,8 @@ provider:
     environment:
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
         PG_HOST: ${self:custom.table}.cwa2ipu4ms9x.${self:custom.region}.rds.amazonaws.com
-        PG_PORT: 5432
-        PG_DATABASE: products
-        PG_USERNAME: postgres
-        PG_PASSWORD: *****************
         REGION: ${self:custom.region}
+        BUCKET_NAME: ${self:custom.bucketName}
         SQS_URL:
             Ref: CatalogItemsQueue
         SNS_ARN:
@@ -50,6 +48,12 @@ functions:
                     parameters:
                         querystrings:
                             name: true
+                  autorizer:
+                    name: basicAuthorizer
+                    arn: "arn:aws:lambda:eu-west-1:285945094917:function:authorization-service-dev-basicAuthorizer"
+                    resultTtlInSeconds: 0
+                    identitySource: method.request.header.Authorization
+                    type: token
 
     importFileParser:
         handler: src/parse-products.importFileParser
@@ -118,3 +122,21 @@ resources:
         Protocol: email
         TopicArn:
           Ref: CreateProductTopic
+    GatewayResponseDefault4XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: DEFAULT_4XX
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
+    GatewayResponseDefault5XX:
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: DEFAULT_5XX
+        RestApiId:
+          Ref: 'ApiGatewayRestApi'
